@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A2A Chat</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: #f0f2f5;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .window {
+      width: 480px;
+      max-width: 100%;
+      height: 640px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      background: #0f62fe;
+      color: #fff;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .header .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #42be65;
+      flex-shrink: 0;
+    }
+    .header .title { font-size: 15px; font-weight: 600; }
+    .header .subtitle { font-size: 11px; opacity: 0.75; margin-top: 1px; }
+
+    .config {
+      padding: 10px 16px;
+      background: #f4f4f4;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .config input {
+      flex: 1;
+      font-size: 11px;
+      padding: 5px 8px;
+      border: 1px solid #c6c6c6;
+      border-radius: 4px;
+      background: #fff;
+      color: #161616;
+    }
+    .config label { font-size: 11px; color: #525252; white-space: nowrap; }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .msg { display: flex; flex-direction: column; max-width: 80%; }
+    .msg.user { align-self: flex-end; align-items: flex-end; }
+    .msg.agent { align-self: flex-start; align-items: flex-start; }
+
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .msg.user .bubble { background: #0f62fe; color: #fff; border-bottom-right-radius: 4px; }
+    .msg.agent .bubble { background: #e8e8e8; color: #161616; border-bottom-left-radius: 4px; }
+    .msg.error .bubble { background: #fff1f1; color: #da1e28; border: 1px solid #ffb3b8; }
+
+    .meta { font-size: 11px; color: #8d8d8d; margin-top: 3px; padding: 0 4px; }
+
+    .input-row {
+      display: flex;
+      padding: 12px 16px;
+      gap: 8px;
+      border-top: 1px solid #e0e0e0;
+      flex-shrink: 0;
+    }
+    .input-row input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #c6c6c6;
+      border-radius: 20px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .input-row input:focus { border-color: #0f62fe; }
+    .input-row button {
+      background: #0f62fe;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .input-row button:hover { background: #0043ce; }
+    .input-row button:disabled { background: #c6c6c6; cursor: not-allowed; }
+
+    .typing { display: flex; gap: 4px; align-items: center; padding: 10px 14px; }
+    .typing span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #8d8d8d;
+      animation: bounce 1.2s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+  </style>
+</head>
+<body>
+<div class="window">
+  <div class="header">
+    <div>
+      <div class="dot"></div>
+    </div>
+    <div>
+      <div class="title">Hello World Agent</div>
+      <div class="subtitle">A2A · protocol 0.3.0</div>
+    </div>
+  </div>
+
+  <div class="config">
+    <label>Server URL</label>
+    <input id="serverUrl" type="text" placeholder="https://your-ngrok-url.ngrok-free.app" />
+  </div>
+
+  <div class="messages" id="messages"></div>
+
+  <div class="input-row">
+    <input id="input" type="text" placeholder="Type a message…" autocomplete="off" />
+    <button id="sendBtn" title="Send">&#10148;</button>
+  </div>
+</div>
+
+<script>
+  const messagesEl = document.getElementById('messages');
+  const inputEl = document.getElementById('input');
+  const sendBtn = document.getElementById('sendBtn');
+  const serverUrlEl = document.getElementById('serverUrl');
+
+  let msgCounter = 0;
+
+  function addMessage(role, text, isError = false) {
+    const wrapper = document.createElement('div');
+    wrapper.className = `msg ${isError ? 'error' : role}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    wrapper.appendChild(bubble);
+    wrapper.appendChild(meta);
+    messagesEl.appendChild(wrapper);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return wrapper;
+  }
+
+  function addTyping() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'msg agent';
+    wrapper.id = 'typing-indicator';
+    wrapper.innerHTML = '<div class="bubble typing"><span></span><span></span><span></span></div>';
+    messagesEl.appendChild(wrapper);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function removeTyping() {
+    const el = document.getElementById('typing-indicator');
+    if (el) el.remove();
+  }
+
+  async function send() {
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    const url = serverUrlEl.value.trim().replace(/\/$/, '');
+    if (!url) {
+      addMessage('agent', 'Please enter your ngrok Server URL above first.', true);
+      return;
+    }
+
+    inputEl.value = '';
+    sendBtn.disabled = true;
+
+    addMessage('user', text);
+    addTyping();
+
+    const payload = {
+      jsonrpc: '2.0',
+      id: String(++msgCounter),
+      method: 'message/send',
+      params: {
+        message: {
+          kind: 'message',
+          messageId: 'msg-' + msgCounter,
+          role: 'user',
+          parts: [{ kind: 'text', text }]
+        }
+      }
+    };
+
+    try {
+      const res = await fetch(url + '/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      removeTyping();
+
+      if (data.error) {
+        addMessage('agent', `Error ${data.error.code}: ${data.error.message}`, true);
+      } else {
+        const artifacts = data.result?.artifacts ?? [];
+        const parts = artifacts[0]?.parts ?? [];
+        const responseText = parts[0]?.text ?? parts[0]?.root?.text ?? JSON.stringify(data.result);
+        addMessage('agent', responseText);
+      }
+    } catch (err) {
+      removeTyping();
+      addMessage('agent', 'Could not reach the agent: ' + err.message, true);
+    }
+
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+
+  sendBtn.addEventListener('click', send);
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+  inputEl.focus();
+</script>
+</body>
+</html>
