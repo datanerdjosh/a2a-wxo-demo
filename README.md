@@ -11,7 +11,7 @@ Connect an external A2A-compliant agent to IBM watsonx Orchestrate SaaS so Orche
 | Python 3.9+ | `python3 --version` to check |
 | ngrok | Free account at [ngrok.com](https://ngrok.com). Install: `brew install ngrok/ngrok/ngrok` |
 | IBM watsonx Orchestrate SaaS | Trial or paid tenant on IBM Cloud |
-| If you are an IBMer, you can use a TechZone watsonx Orchestrate reservation |
+| | If you are an IBMer, you can use a TechZone watsonx Orchestrate reservation |
 
 ---
 
@@ -109,7 +109,8 @@ Before importing the agent, Orchestrate requires a named credential entry even f
 ## Step 5 — Import the External Agent
 With the product evolving and changing over time, how you import an agent might be slightly different. I have provided two paths below.
 
-** PATH 1 ** 
+**PATH 1** 
+=================================
 Click the Hamburger icon in the upper left corner. If you have the **Agent Directory** within the **AI Gateway**, follow these steps to get to the point where you are important the agent.
 1. Click the Hamburger icon in the upper left corner go to **AI Gateway → Agent Directory**
 2. Click **Add agent**
@@ -134,7 +135,8 @@ Click the Hamburger icon in the upper left corner. If you have the **Agent Direc
 The agent will appear in your Agents list.
 
 
-** PATH 2 ** 
+**PATH 2** 
+=================================
 If you do NOT have the **Agent Directory**, you will need to follow these steps.
 1. Create an Agent. This is the one that will be collaborating with your A2A agent. You do not need Knowledge or Tools. Example information below.
    > Agent Name: *A2A Test Agent*
@@ -185,12 +187,12 @@ Hello, World! I have received your request (Hello)
 
 Once you have tested out your A2A agent and have several chats, you can extend your demo by incorporating elements from the Agentic Control Plane.
 
-** AGENT ANALYTICS **
+**AGENT ANALYTICS**
 1. Navigate to the **Agent Analytics** for your A2A Test Agent via the Adoption section within the Agentic Control Plane or through the Analyze option on the Orchestrate menu.
 2. Once you are looking at the analytics for the agent, navigate to the Conversations tab so you can see more granular details for the conversations that you've had with your agent.
 3. If you click the **Debug** option on a chat, you can get down to the trace level detail of those conversations.
 
-** CONTROLS **
+**CONTROLS**
 1. Another option is to set a Control (kind of like a real-time guardrail) on the agent. To access Controls, you can navigate to **Security and Risk** from the home page and then select **View All** next to Recent Controls.
 2. Create Control
 3. Select PII Filter or Content Guardrails depending on the time of guardrail/control you'd like to showcase. For example, we'll go with PII Filter.
